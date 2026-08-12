@@ -97,37 +97,64 @@ button:hover {
 }
 
 /* OBS OVERLAY */
-/* OBS OVERLAY */
 
 .overlay {
+  width: 100vw;
+  height: 100vh;
+
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 10px 16px;
-  font-family: Arial, sans-serif;
-  color: white;
+  align-items: center;
+  justify-content: center;
+
   background: transparent;
+
+  font-family: Arial, sans-serif;
+  font-weight: 800;
+
+  pointer-events: none;
 }
 
 .overlay-record {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  justify-content: center;
+
+  gap: 24px;
+
   font-size: 32px;
-  font-weight: bold;
 }
 
 .overlay-wins {
-  color: #4caf50;
+  color: #4ade80;
+
+  text-shadow:
+    2px 2px 0 #000,
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000;
 }
 
 .overlay-losses {
-  color: #f44336;
+  color: #f87171;
+
+  text-shadow:
+    2px 2px 0 #000,
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000;
 }
 
 .overlay-rate {
-  display: block;
+  margin-top: 6px;
+
+  font-size: 18px;
+
   color: white;
-  font-size: 20px;
-  font-weight: bold;
+
+  text-shadow:
+    2px 2px 0 #000,
+    -2px -2px 0 #000,
+    2px -2px 0 #000,
+    -2px 2px 0 #000;
 }

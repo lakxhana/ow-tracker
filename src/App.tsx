@@ -10,47 +10,6 @@ function App() {
     return Number(localStorage.getItem("ow-losses")) || 0;
   });
 
-  // Listen for changes made by another browser tab/window
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "ow-wins") {
-        setWins(Number(event.newValue) || 0);
-      }
-
-      if (event.key === "ow-losses") {
-        setLosses(Number(event.newValue) || 0);
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === "w") {
-        addWin();
-      }
-  
-      if (event.key.toLowerCase() === "l") {
-        addLoss();
-      }
-  
-      if (event.key.toLowerCase() === "r") {
-        reset();
-      }
-    };
-  
-    window.addEventListener("keydown", handleKeyDown);
-  
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [wins, losses]);
-
   const totalGames = wins + losses;
 
   const winRate =
@@ -78,22 +37,86 @@ function App() {
     localStorage.setItem("ow-losses", "0");
   };
 
+  // Update when another tab changes localStorage
+  useEffect(() => {
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === "ow-wins") {
+        setWins(Number(event.newValue) || 0);
+      }
+
+      if (event.key === "ow-losses") {
+        setLosses(Number(event.newValue) || 0);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, []);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't trigger shortcuts while typing in an input
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      if (event.key.toLowerCase() === "w") {
+        addWin();
+      }
+
+      if (event.key.toLowerCase() === "l") {
+        addLoss();
+      }
+
+      if (event.key.toLowerCase() === "r") {
+        reset();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [wins, losses]);
+
+  // Check if we're displaying the streaming overlay
   const isOverlay = window.location.pathname === "/overlay";
+
+  // =========================
+  // STREAM OVERLAY
+  // =========================
 
   if (isOverlay) {
     return (
       <div className="overlay">
         <div className="overlay-record">
-          <span className="overlay-wins">W {wins}</span>
-          <span className="overlay-losses">L {losses}</span>
+          <span className="overlay-wins">
+            W {wins}
+          </span>
+
+          <span className="overlay-losses">
+            L {losses}
+          </span>
         </div>
-  
+
         <div className="overlay-rate">
           {winRate}% WIN RATE
         </div>
       </div>
     );
   }
+
+  // =========================
+  // MAIN CONTROLLER
+  // =========================
 
   return (
     <main className="app">
@@ -103,12 +126,18 @@ function App() {
         <div className="stats">
           <div className="stat">
             <span className="label">WINS</span>
-            <span className="number wins">{wins}</span>
+
+            <span className="number wins">
+              {wins}
+            </span>
           </div>
 
           <div className="stat">
             <span className="label">LOSSES</span>
-            <span className="number losses">{losses}</span>
+
+            <span className="number losses">
+              {losses}
+            </span>
           </div>
         </div>
 
@@ -117,18 +146,31 @@ function App() {
         </div>
 
         <div className="buttons">
-          <button className="win-button" onClick={addWin}>
+          <button
+            className="win-button"
+            onClick={addWin}
+          >
             + WIN
           </button>
 
-          <button className="loss-button" onClick={addLoss}>
+          <button
+            className="loss-button"
+            onClick={addLoss}
+          >
             + LOSS
           </button>
         </div>
 
-        <button className="reset-button" onClick={reset}>
+        <button
+          className="reset-button"
+          onClick={reset}
+        >
           RESET
         </button>
+
+        <p className="shortcuts">
+          W = Win &nbsp; • &nbsp; L = Loss &nbsp; • &nbsp; R = Reset
+        </p>
       </section>
     </main>
   );
