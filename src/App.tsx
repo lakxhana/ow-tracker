@@ -1,24 +1,16 @@
 import { useEffect, useState } from "react";
+import { supabase } from "./supabase";
 import "./App.css";
 
+type Score = {
+  id: number;
+  wins: number;
+  losses: number;
+};
+
 function App() {
-  // Read score from URL
-  const params = new URLSearchParams(window.location.search);
-
-  const urlWins = Number(params.get("wins"));
-  const urlLosses = Number(params.get("losses"));
-
-  const [wins, setWins] = useState(
-    Number.isFinite(urlWins) && params.has("wins")
-      ? urlWins
-      : Number(localStorage.getItem("ow-wins")) || 0
-  );
-
-  const [losses, setLosses] = useState(
-    Number.isFinite(urlLosses) && params.has("losses")
-      ? urlLosses
-      : Number(localStorage.getItem("ow-losses")) || 0
-  );
+  const [wins, setWins] = useState(0);
+  const [losses, setLosses] = useState(0);
 
   const isOverlay = window.location.pathname === "/overlay";
 
@@ -29,23 +21,87 @@ function App() {
       ? "0.0"
       : ((wins / totalGames) * 100).toFixed(1);
 
-  // Save score
+  // Get current score from Supabase
   useEffect(() => {
-    localStorage.setItem("ow-wins", String(wins));
-    localStorage.setItem("ow-losses", String(losses));
-  }, [wins, losses]);
+    const loadScore = async () => {
+      const { data, error } = await supabase
+        .from("scores")
+        .select("*")
+        .eq("id", 1)
+        .single();
+
+      if (error) {
+        console.error("Failed to load score:", error);
+        return;
+      }
+
+      if (data) {
+        setWins(data.wins);
+        setLosses(data.losses);
+      }
+    };
+
+    loadScore();
+  }, []);
+
+  // Listen for live score changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("ow-score")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "scores",
+          filter: "id=eq.1",
+        },
+        (payload) => {
+          const score = payload.new as Score;
+
+          setWins(score.wins);
+          setLosses(score.losses);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  // Update Supabase
+  const updateScore = async (
+    newWins: number,
+    newLosses: number
+  ) => {
+    const { error } = await supabase
+      .from("scores")
+      .update({
+        wins: newWins,
+        losses: newLosses,
+      })
+      .eq("id", 1);
+
+    if (error) {
+      console.error("Failed to update score:", error);
+      return;
+    }
+
+    setWins(newWins);
+    setLosses(newLosses);
+  };
 
   const addWin = () => {
-    setWins((current) => current + 1);
+    updateScore(wins + 1, losses);
   };
 
   const addLoss = () => {
-    setLosses((current) => current + 1);
+    updateScore(wins, losses + 1);
   };
 
   const reset = () => {
-    setWins(0);
-    setLosses(0);
+    updateScore(0, 0);
   };
 
   // =========================
