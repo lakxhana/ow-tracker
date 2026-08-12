@@ -2,96 +2,54 @@ import { useEffect, useState } from "react";
 import "./App.css";
 
 function App() {
-  const [wins, setWins] = useState(() => {
-    return Number(localStorage.getItem("ow-wins")) || 0;
-  });
+  // Read score from URL
+  const params = new URLSearchParams(window.location.search);
 
-  const [losses, setLosses] = useState(() => {
-    return Number(localStorage.getItem("ow-losses")) || 0;
-  });
+  const urlWins = Number(params.get("wins"));
+  const urlLosses = Number(params.get("losses"));
+
+  const [wins, setWins] = useState(
+    Number.isFinite(urlWins) && params.has("wins")
+      ? urlWins
+      : Number(localStorage.getItem("ow-wins")) || 0
+  );
+
+  const [losses, setLosses] = useState(
+    Number.isFinite(urlLosses) && params.has("losses")
+      ? urlLosses
+      : Number(localStorage.getItem("ow-losses")) || 0
+  );
+
+  const isOverlay = window.location.pathname === "/overlay";
 
   const totalGames = wins + losses;
 
   const winRate =
-    totalGames === 0 ? "0.0" : ((wins / totalGames) * 100).toFixed(1);
+    totalGames === 0
+      ? "0.0"
+      : ((wins / totalGames) * 100).toFixed(1);
+
+  // Save score
+  useEffect(() => {
+    localStorage.setItem("ow-wins", String(wins));
+    localStorage.setItem("ow-losses", String(losses));
+  }, [wins, losses]);
 
   const addWin = () => {
-    const newWins = wins + 1;
-
-    setWins(newWins);
-    localStorage.setItem("ow-wins", newWins.toString());
+    setWins((current) => current + 1);
   };
 
   const addLoss = () => {
-    const newLosses = losses + 1;
-
-    setLosses(newLosses);
-    localStorage.setItem("ow-losses", newLosses.toString());
+    setLosses((current) => current + 1);
   };
 
   const reset = () => {
     setWins(0);
     setLosses(0);
-
-    localStorage.setItem("ow-wins", "0");
-    localStorage.setItem("ow-losses", "0");
   };
 
-  // Update when another tab changes localStorage
-  useEffect(() => {
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === "ow-wins") {
-        setWins(Number(event.newValue) || 0);
-      }
-
-      if (event.key === "ow-losses") {
-        setLosses(Number(event.newValue) || 0);
-      }
-    };
-
-    window.addEventListener("storage", handleStorageChange);
-
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-    };
-  }, []);
-
-  // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // Don't trigger shortcuts while typing in an input
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
-
-      if (event.key.toLowerCase() === "w") {
-        addWin();
-      }
-
-      if (event.key.toLowerCase() === "l") {
-        addLoss();
-      }
-
-      if (event.key.toLowerCase() === "r") {
-        reset();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [wins, losses]);
-
-  // Check if we're displaying the streaming overlay
-  const isOverlay = window.location.pathname === "/overlay";
-
   // =========================
-  // STREAM OVERLAY
+  // OVERLAY
   // =========================
 
   if (isOverlay) {
@@ -115,7 +73,7 @@ function App() {
   }
 
   // =========================
-  // MAIN CONTROLLER
+  // CONTROLLER
   // =========================
 
   return (
@@ -167,10 +125,6 @@ function App() {
         >
           RESET
         </button>
-
-        <p className="shortcuts">
-          W = Win &nbsp; • &nbsp; L = Loss &nbsp; • &nbsp; R = Reset
-        </p>
       </section>
     </main>
   );
